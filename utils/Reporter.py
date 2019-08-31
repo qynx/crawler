@@ -5,7 +5,7 @@ class BaseReporter():
     def __init__(self):
         pass
 
-    def report_lag(self):
+    def report_lag(self, *args, **kw):
         pass
 
     def ping(self):

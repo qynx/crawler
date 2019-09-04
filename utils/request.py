@@ -2,7 +2,7 @@
 import requests
 import time
 from .Reporter import BaseReporter, InfluxReporter
-
+import logging
 
 class Request():
 
@@ -24,6 +24,7 @@ class Request():
         self.reporter = reporter
 
     def get(self, *args, **kw):
+        logging.info("url: %s" % args[0])
         kw["timeout"] = (5, 10)
         start = time.time()
         rsp = self.session.get(*args, **kw)

@@ -23,4 +23,12 @@
 
 > example: https://www.nbiquge.com/7_7295/
 > python main.py run --url https://www.nbiquge.com/7_7295/
-3.  
+3.  jjshu
+
+
+### 配置爬虫 2019-09-06
+
+> 直接写配置文件即可抓取小说
+
+当前支持的网站结构
+    - 所有章节在同一页列出

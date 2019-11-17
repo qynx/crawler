@@ -6,6 +6,7 @@ import redis
 import os
 import time
 import logging
+import uuid
 
 from utils import Chapter, SQLALCHEMY_CONN
 
@@ -20,7 +21,9 @@ mysql_client = pymysql.connect(
                     charset="utf8"
 )
 sqlalchemyConn = SQLALCHEMY_CONN()
-
+book_id = str(uuid.uuid4())[0:32]
+with open("book.txt", "w") as f:
+    f.write(book_id)
 
 class Crawler():
 
@@ -112,10 +115,10 @@ class Crawler():
         content=content.replace('</div>', "")
 
         session = sqlalchemyConn.DBSession()
-        chapter = Chapter(chapter_id=_id, title=title, content=content)
+        chapter = Chapter(chapter_id=_id, title=title, content=content, book_id=book_id)
         session.add(chapter)
         session.commit()
 
 if __name__ == '__main__':
-    crawler = Crawler(start_url='https://m.80txt.la/11155/page-1.html')
+    crawler = Crawler(start_url='https://m.80txt.la/2990/page-1.html')
     crawler.run()

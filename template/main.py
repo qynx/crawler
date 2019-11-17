@@ -1,7 +1,9 @@
 import click
+import config
 import logging
 import redis
 import sys
+import time
 import umsgpack
 import uuid
 from lxml.html import fromstring
@@ -16,6 +18,7 @@ logging.basicConfig(
 )
 
 book_id = str(uuid.uuid4())[0:32]
+book_id = "b7b341ab-79bc-4938-9e39-226d7f12"
 with open("book.txt", "a") as f:
     f.seek(0)
     f.write(book_id + "\n")
@@ -52,18 +55,20 @@ class Crawler():
         串行取数据 每次从redis中取出一个list 抓取相应章节后
         再抓取下一页的链接 如果取不到新的链接 则程序结束
         '''
-        list_url = redisClient.rpop(self.LIST_URL_KEY)
-        if list_url is None:
-            return
-        logging.info("get url %s", list_url)
-        self.parse_list(list_url)
+        while True:
+            list_url = redisClient.rpop(self.LIST_URL_KEY)
+            if list_url is None:
+                return
+            logging.info("get url %s", list_url)
+            self.parse_list(list_url)
+            time.sleep(10)
 
     def parse_list(self, url):
         logging.info("parse_list get url: %s" % url.decode("utf-8"))
         rsp = self.request.get(url.decode("gbk"))
         rsp.encoding = self.CHARSET  # 指定rsp的编码方式（否则解码后会有乱码）
         root = fromstring(rsp.text)
-        # import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         chapters = root.xpath(self.config.LIST_A_XPATH)
         logging.info("get %s chapter" % len(chapters))
         for chapter in chapters:
@@ -80,6 +85,10 @@ class Crawler():
                 '''
                 logging.info("now chapter_id: %s" % chapter_id)
                 self.consume_chapter()
+                time.sleep(1)
+        if self.config.NEXT_PAGE_PATTERN != "":
+            self.config.START_ID = self.config.START_ID + 1
+            redisClient.lpush(self.LIST_URL_KEY, self.config.NEXT_PAGE_PATTERN.format(next_page_id = self.config.START_ID))
 
     def consume_chapter(self):
         while True:
@@ -112,7 +121,7 @@ class Crawler():
                           site=self.HOST)
         sqlSession.add(chapter)
         sqlSession.commit()
-
+    
     def restart(self):
         '''
         清除数据
@@ -135,10 +144,14 @@ def debug():
 @cli.command()
 @click.option("--url")
 def run(url):
-    Crawler.restart()
-    crawler = Crawler(url)
+    crawler = Crawler(url, config)
     crawler.run()
 
+@cli.command()
+@click.option("--url")
+def chapter(url):
+    crawler = Crawler(url, config)
+    crawler.consume_chapter()
     
 if __name__ == "__main__":
     cli()

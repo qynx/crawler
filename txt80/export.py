@@ -4,6 +4,7 @@ from lxml.etree import tostring
 import pymysql
 import redis
 import os
+import sys
 import time
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -16,8 +17,8 @@ mysql_client = pymysql.connect(
                     charset="utf8"
 )
 
-def exports():
-    sql = 'select chapter_id, title, content from novel order by chapter_id'
+def exports(book_id):
+    sql = 'select chapter_id, title, content from novel  where book_id = "%s" order by chapter_id' % book_id
     cursor = mysql_client.cursor()
     cursor.execute(sql)
     datas = cursor.fetchall()
@@ -27,4 +28,5 @@ def exports():
             f.write(data[2])
 
 if __name__ == "__main__":
-    exports()
+    
+    exports(sys.argv[1])
